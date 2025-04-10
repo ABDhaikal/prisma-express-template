@@ -10,9 +10,22 @@
 `tsc —init`
 5. change `tsconfig.json` `outdir`
 
-![image.png](attachment:1bd7d2db-3163-40fb-9ad3-915cdc02417a:image.png)
+```json
+{
+   "compilerOptions": {
+      "target": "es2016",
+      "module": "commonjs",
+      "outDir": "./dist",
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+      "skipLibCheck": true
+   }
+}
 
-so default `tsconfig.json` should be 
+```
+
+so default `tsconfig.json` should be
 
 ```json
 {
