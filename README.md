@@ -1,4 +1,8 @@
+## 
+
 # creating template express prisma
+
+## manual creating template
 
 1. initialize `package json`
 `npm i —y`
@@ -25,7 +29,7 @@
 
 ```
 
-so default `tsconfig.json` should be
+so default `tsconfig.json` should be 
 
 ```json
 {
@@ -42,7 +46,7 @@ so default `tsconfig.json` should be
 
 ```
 
-1. go to `package.json`  and add comment to run dev run build and run start
+6. go to `package.json`  and add comment to run dev run build and run start
 
 ```
 "scripts": {
@@ -52,7 +56,7 @@ so default `tsconfig.json` should be
   },
 ```
 
-1. create  `src/config/env.ts`
+7. create  `src/config/env.ts`
 
 ```tsx
 import dotenv from 'dotenv';
@@ -62,25 +66,37 @@ dotenv.config();
 export const PORT = process.env.PORT
 ```
 
-1. create `src/index.ts`
+8. create `src/index.ts`
 
 ```tsx
 import express from "express";
 import { PORT } from "./config/env";
+import { errorMiddleware } from "./middlewares/error.middleware";
+import cors from "cors";
 
+// define the express app
 const app = express();
+// app cors
+app.use(cors());
 
+// define express json for parsing json data
+app.use(express.json());
+
+// your routes should be here
+
+// your error middle ware
+app.use(errorMiddleware);
+// listening to the server
 app.listen(PORT, () => {
    console.log(`Server is running at http://localhost:${PORT}`);
 });
-
 ```
 
-1. initialize prisma
+9. initialize prisma
 
 `npx prisma init`
 
-1. setup `prisma/schema.prisma` into default
+10. setup `prisma/schema.prisma` into default
 
 ```
 generator client {
@@ -93,7 +109,7 @@ datasource db {
 }
 ```
 
-1. create `src/config/prisma.ts`
+11. create `src/config/prisma.ts`
 
 ```
 import { PrismaClient } from "@prisma/client";
@@ -101,7 +117,7 @@ import { PrismaClient } from "@prisma/client";
 export default new PrismaClient();
 ```
 
-1. create middleware folder and file `src/middlewares/error.middleware.ts`
+12. create middleware folder and file `src/middlewares/error.middleware.ts`
 
 ```
 import { NextFunction, Request, Response } from "express";
@@ -120,7 +136,7 @@ export const errorMiddleware = (
 
 ```
 
-1. create utils folder and file  `src/utils/api-error.ts`
+13. create utils folder and file  `src/utils/api-error.ts`
 
 ```
 export class ApiError extends Error {
@@ -132,7 +148,7 @@ export class ApiError extends Error {
 }
 ```
 
-1. add your error middleware to your index.ts so its can be run
+14. add your error middleware to your index.ts so its can be run
 
 ```tsx
 import express from "express";
@@ -152,7 +168,7 @@ app.listen(PORT, () => {
 
 ```
 
-1. create another template folder
+15. create another template folder
 
 ```tsx
 mkdir src/controllers
@@ -174,5 +190,60 @@ model User {
 }
 ```
 
-1. generate prisma db
+2. create your service file in `src/service/get-users.service.ts`
+
+```
+import prisma from "../config/prisma";
+import { ApiError } from "../utils/api-error";
+
+export const getUsersService = async () => {
+   try {
+      const users = await prisma.user.findMany();
+      return users;
+   } catch (error) {
+      throw new ApiError("Error fetching users", 500);
+   }
+};
+```
+
+3. create controller on `src/controllers/user.controller.ts`
+
+```
+import { NextFunction, Request, Response } from "express";
+import { ApiError } from "../utils/api-error";
+import { getUsersService } from "../services/get-users.service";
+
+export const getUsersController = async (
+   req: Request,
+   res: Response,
+   next: NextFunction
+) => {
+   try {
+      const users = await getUsersService();
+      res.status(200).json(users);
+   } catch (error) {
+      next(new ApiError("Error fetching users", 500));
+   }
+};
+
+```
+
+4. create your routes file on `src/routes/user.router.ts`
+
+```
+import { Router } from "express";
+import { getUsersController } from "../controllers/user.controller";
+
+const router = Router();
+
+// Define the all routes for the user router
+router.get("/", getUsersController);
+export default router;
+```
+
+5. add your router into index.ts
+`app.use("/users", userRouter);`
+6. generate prisma db
 `npx prisma generate`
+
+7. to run your code you can use `npm run dev` on your terminal
